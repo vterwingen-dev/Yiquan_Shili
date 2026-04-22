@@ -78,6 +78,7 @@
             pointer-events: none;
             z-index: 10;
             display: none;
+            opacity: 0.5;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -92,20 +93,21 @@
             z-index: 10;
             display: none;
             pointer-events: none;
+            opacity: 0.5;
         }
 
         .tips-overlay .tip {
             background: rgba(0, 0, 0, 0.78);
             color: #fff;
-            padding: 10px 14px;
+            padding: 14px 18px;
             border-radius: 10px;
-            font-size: 0.95rem;
-            line-height: 1.35;
+            font-size: 1.25rem;
+            line-height: 1.4;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border-left: 3px solid var(--accent);
+            border-left: 4px solid var(--accent);
             animation: tipFade 0.5s ease;
-            max-width: 640px;
+            max-width: 780px;
             margin: 0 auto;
         }
 
@@ -114,12 +116,12 @@
         }
 
         .tips-overlay .tip .tag {
-            font-size: 0.7rem;
+            font-size: 0.85rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             font-weight: 700;
             color: var(--accent);
-            margin-right: 8px;
+            margin-right: 10px;
         }
 
         .tips-overlay .tip.error .tag {
@@ -678,7 +680,7 @@
 
             tipIndex = 0;
             showTip(seq[0]);
-            const durationMs = Math.max(3500, Math.round(
+            const durationMs = Math.max(8000, Math.round(
                 ((timeToSeconds(item.end) - timeToSeconds(item.start)) * 1000) / seq.length
             ));
             tipCycleId = setInterval(() => {
