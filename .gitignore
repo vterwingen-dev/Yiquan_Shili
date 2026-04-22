@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+
+# Videos (zu groß für Git)
+*.mp4
+
+# Lokale Quelldaten / Arbeitsdateien
+*.xlsx
+*.csv

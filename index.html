@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>Yiquan Shili Trainer</title>
+    <style>
+        :root {
+            --bg: #000;
+            --card-bg: #1a1a2e;
+            --card-active: #16213e;
+            --accent: #00d4aa;
+            --accent-dim: rgba(0, 212, 170, 0.15);
+            --text: #e0e0e0;
+            --text-secondary: #888;
+            --text-muted: #555;
+            --border: #222;
+            --bar-bg: rgba(15, 15, 30, 0.85);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100dvh;
+            padding-bottom: calc(70px + var(--safe-bottom));
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            padding: 12px 16px 8px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.5px;
+        }
+
+        /* Video */
+        .video-section {
+            position: relative;
+            width: 100%;
+            background: #111;
+        }
+
+        video {
+            display: block;
+            width: 100%;
+            outline: none;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            pointer-events: none;
+            z-index: 10;
+            display: none;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Tips overlay on video (cycles through points) */
+        .tips-overlay {
+            position: absolute;
+            bottom: 48px;
+            left: 12px;
+            right: 12px;
+            z-index: 10;
+            display: none;
+            pointer-events: none;
+        }
+
+        .tips-overlay .tip {
+            background: rgba(0, 0, 0, 0.78);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            line-height: 1.35;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-left: 3px solid var(--accent);
+            animation: tipFade 0.5s ease;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        .tips-overlay .tip.error {
+            border-left-color: #ff6b6b;
+        }
+
+        .tips-overlay .tip .tag {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-right: 8px;
+        }
+
+        .tips-overlay .tip.error .tag {
+            color: #ff6b6b;
+        }
+
+        @keyframes tipFade {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Info panel (full list) below video */
+        .info-panel {
+            display: none;
+            padding: 12px 16px 4px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-panel .info-section {
+            margin-bottom: 10px;
+        }
+
+        .info-panel .info-section h3 {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-panel .info-section.points h3 {
+            color: var(--accent);
+        }
+
+        .info-panel .info-section.errors h3 {
+            color: #ff6b6b;
+        }
+
+        .info-panel ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .info-panel li {
+            font-size: 0.85rem;
+            color: var(--text);
+            padding: 4px 0 4px 14px;
+            position: relative;
+            line-height: 1.4;
+        }
+
+        .info-panel .points li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 11px;
+            width: 5px;
+            height: 5px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        .info-panel .errors li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 11px;
+            width: 5px;
+            height: 5px;
+            background: #ff6b6b;
+            border-radius: 50%;
+        }
+
+        /* Current exercise info bar */
+        .now-playing {
+            display: none;
+            padding: 10px 16px;
+            background: var(--card-active);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .now-playing .label {
+            color: var(--accent);
+            font-weight: 600;
+            margin-right: 6px;
+        }
+
+        .now-playing .name {
+            color: var(--text);
+        }
+
+        /* Card list */
+        .card-list {
+            padding: 8px 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .card:active {
+            background: var(--card-active);
+        }
+
+        .card.active {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            border-left: 3px solid var(--accent);
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .card-pinyin {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .card-chinese {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .card-meaning {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .card-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .card.active .card-pinyin {
+            color: var(--accent);
+        }
+
+        /* Fixed bottom bar */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bar-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            padding: 10px 16px;
+            padding-bottom: calc(10px + var(--safe-bottom));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .pill-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: all 0.2s;
+            min-height: 44px;
+        }
+
+        .pill-btn:active {
+            transform: scale(0.95);
+        }
+
+        .pill-btn.active {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .pill-btn .icon {
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+        .pill-btn.fullscreen-btn {
+            padding: 10px 14px;
+            margin-left: auto;
+        }
+
+        .pill-btn.tips-btn {
+            padding: 10px 14px;
+        }
+
+        /* Fullscreen mode */
+        .video-section:fullscreen,
+        .video-section:-webkit-full-screen {
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-section:fullscreen video,
+        .video-section:-webkit-full-screen video {
+            max-height: 100vh;
+            max-width: 100vw;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>Yiquan Shili Trainer</h1>
+    </div>
+
+    <div class="video-section" id="videoWrapper">
+        <div id="shiliOverlay" class="video-overlay"></div>
+        <div id="tipsOverlay" class="tips-overlay"></div>
+        <video id="shiliVideo" controls playsinline>
+            <source src="PingBu-Shili-8 auf Vimeo.mp4" type="video/mp4">
+            Dein Browser unterstützt das Video-Tag nicht.
+        </video>
+    </div>
+
+    <div class="now-playing" id="nowPlaying">
+        <span class="label">Aktuell:</span>
+        <span class="name" id="currentShiliName">-</span>
+    </div>
+
+    <div class="info-panel" id="infoPanel">
+        <div class="info-section points">
+            <h3>Wichtige Punkte</h3>
+            <ul id="pointsList"></ul>
+        </div>
+        <div class="info-section errors">
+            <h3>Typische Fehler</h3>
+            <ul id="errorsList"></ul>
+        </div>
+    </div>
+
+    <div class="card-list" id="cardList">
+        <!-- Cards populated by JS -->
+    </div>
+
+    <div class="bottom-bar">
+        <button class="pill-btn active" id="loopToggle">
+            <span class="icon">&#x1f501;</span> Loop
+        </button>
+        <button class="pill-btn" id="randomToggle">
+            <span class="icon">&#x1f500;</span> Zufall
+        </button>
+        <button class="pill-btn tips-btn active" id="tipsToggle" title="Hinweise einblenden">
+            <span class="icon">&#x1F4A1;</span> Hinweise
+        </button>
+        <button class="pill-btn fullscreen-btn" id="fullscreenBtn">
+            <span class="icon">&#x26F6;</span>
+        </button>
+    </div>
+
+    <script>
+        // Allgemeine Yiquan-Prinzipien gelten für alle Shili:
+        // Hunyuan Li (浑圆力 – runde Ganzkörperkraft), Liu Mian Li (六面力 – Sechs-Richtungs-Kraft),
+        // Song-Jin (松紧 – Entspannt & gespannt zugleich), Yi (意 – geistige Führung / Vorstellung),
+        // Kopf aufgehängt (顶头悬), Schultern senken / Ellbogen fallen lassen (沉肩坠肘),
+        // Brust leicht einrollen / Rücken runden (含胸拔背), Dantian als Zentrum, Mojin (摸劲 – Widerstand spüren).
+        const shiliData = [
+            {
+                id: 1, pinyin: "Kāi Hé Shìlì", meaning: "Öffnen & Schließen", chinese: "开合试力",
+                start: "00:11", end: "00:54",
+                points: [
+                    "Öffnen (Kāi) & Schließen (Hé) in allen sechs Richtungen gleichzeitig – nicht nur die Arme bewegen",
+                    "Bewegung beginnt im Dantian / Zentrum, Arme folgen",
+                    "Hunyuan-Rundung (浑圆) bleibt – Achseln öffnen, Ellbogen hängen",
+                    "Atem fließt frei, gleichmäßiges, langsames Tempo",
+                    "Yi (Vorstellung): einen großen, elastischen Ballon dehnen und komprimieren"
+                ],
+                errors: [
+                    "Nur Arme öffnen/schließen – kein Ganzkörper-Zusammenhang (Hunyuan geht verloren)",
+                    "Brust beim Schließen einfallen lassen oder beim Öffnen überstrecken",
+                    "Schultern heben sich beim Öffnen",
+                    "Wurzel in den Füßen löst sich",
+                    "Bewegung wird lokal / mechanisch statt ganzkörperlich-elastisch"
+                ]
+            },
+            {
+                id: 2, pinyin: "Bō Shuǐ Shìlì", meaning: "Wasser schieben / teilen", chinese: "拨水试力",
+                start: "00:54", end: "01:42",
+                points: [
+                    "Vorstellung: Hände bewegen sich durch dickflüssiges Wasser – konstanter Widerstand (Mojin)",
+                    "Arme bewegen sich in Bögen, nicht in geraden Linien",
+                    "Taille (Yao) dreht mit – Antrieb aus der Mitte, nicht aus den Schultern",
+                    "Gewichtsverlagerung synchron zur Armbewegung",
+                    "Vorn–hinten-Kraft bleibt immer ausbalanciert (前後争力)"
+                ],
+                errors: [
+                    "Nur mit den Armen schieben / ziehen – Taille bleibt starr",
+                    "Widerstandsgefühl geht verloren (Kōng 空 – leer)",
+                    "Geschwindigkeit wird ungleichmäßig",
+                    "Schultern und Nacken spannen sich an",
+                    "Ellbogen fliegen hoch statt zu sinken"
+                ]
+            },
+            {
+                id: 3, pinyin: "Píng Tuī Shìlì", meaning: "Flaches Schieben", chinese: "平推试力",
+                start: "01:42", end: "02:13",
+                points: [
+                    "Beide Hände schieben auf gleicher Höhe gerade nach vorn",
+                    "Kraft kommt aus Rücken & Taille (Bèi-Jìn), nicht aus den Armen",
+                    "Ellbogen bleiben tief und schwer (沉肘)",
+                    "Gegenkraft: Vorstellung gleichzeitigen Ziehens nach hinten (争力)",
+                    "Rundung in den Armen erhalten – nie ganz durchstrecken"
+                ],
+                errors: [
+                    "Schultern heben sich, Ellbogen flattern nach außen",
+                    "Arme werden vollständig durchgestreckt – Kraft bricht",
+                    "Oberkörper kippt nach vorn statt als Einheit zu schieben",
+                    "Beim Zurücknehmen geht der Widerstand verloren",
+                    "Brust drückt sich raus – Hanxiong Babei (含胸拔背) fehlt"
+                ]
+            },
+            {
+                id: 4, pinyin: "Fú Àn Shìlì", meaning: "Stützen & Drücken", chinese: "扶按试力",
+                start: "02:13", end: "03:08",
+                points: [
+                    "Hände drücken sanft auf einen imaginären schwimmenden Ball (Àn 按)",
+                    "Gleichzeitiges Stützen/Hochtragen (Fú 扶) – Kraft geht nach unten & oben zugleich",
+                    "Ellbogen bleiben gebeugt, schwer und nach außen getragen",
+                    "Rücken bleibt aktiv – nicht nur mit den Händen drücken",
+                    "Füße verwurzeln tief, Knie leicht federnd"
+                ],
+                errors: [
+                    "Arme werden durchgedrückt – Stütz-Qualität geht verloren",
+                    "Nur nach unten drücken, ohne das „Aufschwimmen\" zu fühlen",
+                    "Schultern ziehen hoch",
+                    "Handgelenke knicken ab statt gerade zu bleiben",
+                    "Sechs-Richtungs-Kraft (Liù Miàn Lì) reduziert sich auf eine Richtung"
+                ]
+            },
+            {
+                id: 5, pinyin: "Gōu Guà Shìlì", meaning: "Haken & Hängen", chinese: "钩挂试力",
+                start: "03:08", end: "03:55",
+                points: [
+                    "Hände haken wie mit einem Greifhaken – Handwurzel führt, Finger leicht gekrümmt",
+                    "„Hängen\" (Guà): Vorstellung, an einem Ast zu hängen – Schulterblätter ziehen nach unten",
+                    "Ellbogen sinken zuerst und leiten die Bewegung ein",
+                    "Zugkraft kommt aus dem Rücken (Lat) und der Taille, nicht aus den Bizeps",
+                    "Koordination von Hüftdrehung und Ziehen – gesamter Körper als eine Einheit"
+                ],
+                errors: [
+                    "Mit Bizeps / Armen ziehen statt mit Rücken",
+                    "Taille und Hüfte drehen nicht mit",
+                    "Struktur kollabiert – Ellbogen werden zu hoch oder zu eng",
+                    "Tempo ungleichmäßig – der Zug wird ruckartig",
+                    "„Hängen\"-Qualität geht verloren, nur noch Ziehen übrig"
+                ]
+            },
+            {
+                id: 6, pinyin: "Fēn Guà Shìlì", meaning: "Teilen & Hängen", chinese: "分挂试力",
+                start: "03:55", end: "05:02",
+                points: [
+                    "Teilen (Fēn 分) nach außen kombiniert mit „Hängen\" (Guà 挂)",
+                    "Diagonale / über Kreuz laufende Kräfte – eine Hand teilt, die andere hakt",
+                    "Körper öffnet und schließt sich als Einheit, Dantian steuert",
+                    "Ellbogen bleiben schwer, Schulterblätter eingebettet",
+                    "Yi: als ob man gleichzeitig etwas auseinanderzieht und festhält"
+                ],
+                errors: [
+                    "Arme bewegen sich unabhängig voneinander",
+                    "„Hängen\"-Qualität verloren – wird nur ein Auseinanderziehen",
+                    "Oberkörper-Rotation ohne Hüft-/Fuß-Beteiligung",
+                    "Intention (Yi) fehlt – die Übung wird leer",
+                    "Tempo zu schnell, dadurch keine Kraft-Durchdringung"
+                ]
+            },
+            {
+                id: 7, pinyin: "Xuán Fǎ Shìlì", meaning: "Dreh-Methode (Rotation)", chinese: "旋法试力",
+                start: "05:02", end: "05:46",
+                points: [
+                    "Rotation aus der Körpermitte (Dantian / Taille) – Arme folgen passiv",
+                    "Körper dreht sich als eine einzige zylindrische Einheit",
+                    "Wurzel der Füße bleibt stehen – Knie federn, kippen nicht nach innen",
+                    "Kopf bleibt auf der zentralen Achse aufgehängt (顶头悬)",
+                    "Sechs-Richtungs-Kraft bleibt auch während der Drehung erhalten"
+                ],
+                errors: [
+                    "Nur Schultern/Arme drehen – Taille und Hüfte bleiben starr",
+                    "Wurzel löst sich, Füße rutschen oder Knie kippen",
+                    "Wird ein Verdrehen statt einer Rotation – Struktur bricht",
+                    "Kopf verlässt die Mittelachse, Blick wandert unkontrolliert",
+                    "Geschwindigkeitsschwankungen – Rotation verliert das gleichmäßige Mojin"
+                ]
+            },
+            {
+                id: 8, pinyin: "Yáo Fǎ Shìlì", meaning: "Schaukel-Methode (Wiegen)", chinese: "摇法试力",
+                start: "05:46", end: "07:08",
+                points: [
+                    "Gesamter Körper wiegt sich als eine Masse – wie ein Baum im Wind",
+                    "Bewegung ist klein, innerlich, wellenartig",
+                    "Gewicht verlagert sich fließend zwischen Fersen und Ballen (bzw. Seiten)",
+                    "Rahmen und Hunyuan-Rundung bleiben über den gesamten Zyklus erhalten",
+                    "Yi: Wellen, die durch den Körper rollen – kein Muskelaktivismus"
+                ],
+                errors: [
+                    "Nur Oberkörper wiegt sich, Hüfte und Beine bleiben passiv",
+                    "Amplitude wird zu groß – aus dem Wiegen wird ein Schwingen",
+                    "Rahmen kollabiert im Übergang (Schultern hoch, Ellbogen rein)",
+                    "Intention (Yi) und innere Wellenqualität fehlen – mechanisches Schaukeln",
+                    "Atem wird flach oder angehalten statt natürlich durchzulaufen"
+                ]
+            }
+        ];
+
+        const video = document.getElementById('shiliVideo');
+        const videoWrapper = document.getElementById('videoWrapper');
+        const cardList = document.getElementById('cardList');
+        const nowPlaying = document.getElementById('nowPlaying');
+        const currentShiliName = document.getElementById('currentShiliName');
+        const shiliOverlay = document.getElementById('shiliOverlay');
+        const tipsOverlay = document.getElementById('tipsOverlay');
+        const infoPanel = document.getElementById('infoPanel');
+        const pointsList = document.getElementById('pointsList');
+        const errorsList = document.getElementById('errorsList');
+        const loopBtn = document.getElementById('loopToggle');
+        const randomBtn = document.getElementById('randomToggle');
+        const tipsBtn = document.getElementById('tipsToggle');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+        let currentShili = null;
+        let isLooping = true;
+        let isRandom = false;
+        let showTips = true;
+        let tipCycleId = null;
+        let tipIndex = 0;
+
+        function timeToSeconds(timeStr) {
+            const parts = timeStr.split(':');
+            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        }
+
+        // Build cards
+        shiliData.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.id = item.id;
+            card.innerHTML = `
+                <div class="card-top">
+                    <span class="card-pinyin">${item.pinyin}</span>
+                    <span class="card-chinese">${item.chinese}</span>
+                </div>
+                <div class="card-meaning">${item.meaning}</div>
+                <div class="card-time">${item.start} – ${item.end}</div>
+            `;
+            card.addEventListener('click', () => selectShili(item, card));
+            cardList.appendChild(card);
+        });
+
+        function selectShili(item, cardElement) {
+            currentShili = item;
+
+            // Highlight card
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+            if (cardElement) {
+                cardElement.classList.add('active');
+                cardElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            // Play from start
+            video.currentTime = timeToSeconds(item.start);
+            video.play();
+
+            // Now playing bar
+            nowPlaying.style.display = 'block';
+            currentShiliName.textContent = `${item.pinyin} — ${item.meaning}`;
+
+            // Overlay
+            shiliOverlay.innerHTML = `${item.pinyin}<br><span style="font-size:0.7em">${item.chinese}</span>`;
+            shiliOverlay.style.display = 'block';
+
+            // Info panel (full list)
+            renderInfoPanel(item);
+            infoPanel.style.display = 'block';
+
+            // Tips cycling overlay on video
+            startTipCycle(item);
+        }
+
+        function renderInfoPanel(item) {
+            pointsList.innerHTML = item.points.map(p => `<li>${p}</li>`).join('');
+            errorsList.innerHTML = item.errors.map(e => `<li>${e}</li>`).join('');
+        }
+
+        function buildTipSequence(item) {
+            // Alternate points and errors so both categories stay visible
+            const seq = [];
+            const max = Math.max(item.points.length, item.errors.length);
+            for (let i = 0; i < max; i++) {
+                if (item.points[i]) seq.push({ type: 'point', text: item.points[i] });
+                if (item.errors[i]) seq.push({ type: 'error', text: item.errors[i] });
+            }
+            return seq;
+        }
+
+        function startTipCycle(item) {
+            stopTipCycle();
+            if (!showTips) return;
+
+            const seq = buildTipSequence(item);
+            if (!seq.length) return;
+
+            tipIndex = 0;
+            showTip(seq[0]);
+            const durationMs = Math.max(3500, Math.round(
+                ((timeToSeconds(item.end) - timeToSeconds(item.start)) * 1000) / seq.length
+            ));
+            tipCycleId = setInterval(() => {
+                tipIndex = (tipIndex + 1) % seq.length;
+                showTip(seq[tipIndex]);
+            }, durationMs);
+        }
+
+        function showTip(tip) {
+            const tag = tip.type === 'point' ? 'Wichtig' : 'Fehler';
+            const cls = tip.type === 'point' ? 'tip' : 'tip error';
+            tipsOverlay.innerHTML = `<div class="${cls}"><span class="tag">${tag}</span>${tip.text}</div>`;
+            tipsOverlay.style.display = 'block';
+        }
+
+        function stopTipCycle() {
+            if (tipCycleId) {
+                clearInterval(tipCycleId);
+                tipCycleId = null;
+            }
+            tipsOverlay.style.display = 'none';
+            tipsOverlay.innerHTML = '';
+        }
+
+        // Loop check
+        let loopCheckId;
+
+        function checkLoop() {
+            if (currentShili && !video.paused && isLooping) {
+                const endTime = timeToSeconds(currentShili.end);
+                if (video.currentTime >= endTime) {
+                    if (isRandom) {
+                        playRandomShili();
+                    } else {
+                        video.currentTime = timeToSeconds(currentShili.start);
+                        video.play();
+                    }
+                }
+            }
+            loopCheckId = requestAnimationFrame(checkLoop);
+        }
+
+        video.addEventListener('play', () => {
+            cancelAnimationFrame(loopCheckId);
+            checkLoop();
+            if (currentShili && showTips && !tipCycleId) startTipCycle(currentShili);
+        });
+
+        video.addEventListener('pause', () => {
+            cancelAnimationFrame(loopCheckId);
+        });
+
+        // Fallback for background tabs
+        video.addEventListener('timeupdate', () => {
+            if (currentShili && isLooping && video.currentTime >= timeToSeconds(currentShili.end)) {
+                if (isRandom) {
+                    playRandomShili();
+                } else {
+                    video.currentTime = timeToSeconds(currentShili.start);
+                    video.play();
+                }
+            }
+        });
+
+        function playRandomShili() {
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * shiliData.length);
+            } while (shiliData.length > 1 && currentShili && shiliData[randomIndex].id === currentShili.id);
+
+            const randomItem = shiliData[randomIndex];
+            const cardElement = cardList.children[randomIndex];
+            selectShili(randomItem, cardElement);
+        }
+
+        // Pill button toggles
+        loopBtn.addEventListener('click', () => {
+            isLooping = !isLooping;
+            loopBtn.classList.toggle('active', isLooping);
+        });
+
+        randomBtn.addEventListener('click', () => {
+            isRandom = !isRandom;
+            randomBtn.classList.toggle('active', isRandom);
+        });
+
+        tipsBtn.addEventListener('click', () => {
+            showTips = !showTips;
+            tipsBtn.classList.toggle('active', showTips);
+            if (showTips && currentShili) {
+                startTipCycle(currentShili);
+            } else {
+                stopTipCycle();
+            }
+        });
+
+        // Fullscreen
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                videoWrapper.requestFullscreen().catch(err => {
+                    alert(`Fullscreen-Fehler: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        });
+    </script>
+</body>
+
+</html>
